@@ -213,3 +213,9 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+build-tmp/CCT_Visualisierung$Cell.class
+
+build-tmp/CCT_Visualisierung.class
+
+build-tmp/source/CCT_Visualisierung.java
