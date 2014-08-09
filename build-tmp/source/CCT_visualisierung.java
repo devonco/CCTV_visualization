@@ -1,3 +1,21 @@
+import processing.core.*; 
+import processing.data.*; 
+import processing.event.*; 
+import processing.opengl.*; 
+
+import controlP5.*; 
+
+import java.util.HashMap; 
+import java.util.ArrayList; 
+import java.io.File; 
+import java.io.BufferedReader; 
+import java.io.PrintWriter; 
+import java.io.InputStream; 
+import java.io.OutputStream; 
+import java.io.IOException; 
+
+public class CCT_visualisierung extends PApplet {
+
 ArrayList pointList;
 PFont font;
 PImage bgImage;
@@ -22,13 +40,13 @@ PVector location;
 //directions
 Cell[][] grid;
 
-import controlP5.*;
+
 ControlP5 cp5;
 
 PrintWriter test;
 
 
-void setup()
+public void setup()
 {
   String[] frameNumber = loadStrings("framecount.txt");
   maxfc = Integer.parseInt(frameNumber[0]);
@@ -189,23 +207,23 @@ void setup()
   cp5.getController("reset").moveTo("Tracing");
 }
 
-void draw() 
+public void draw() 
 {
 }
 
-void splitAssign(int i) {
+public void splitAssign(int i) {
   String[] temp = split(lines[i], ',');
   id_ = id;
-  id = int(temp[0]);
+  id = PApplet.parseInt(temp[0]);
   x_ = x;
   y_ = y;
-  x = int(temp[1]);
-  y = int(temp[2]);
-  fc = int(temp[3]);
+  x = PApplet.parseInt(temp[1]);
+  y = PApplet.parseInt(temp[2]);
+  fc = PApplet.parseInt(temp[3]);
   location = new PVector(x, y);
 }
 
-void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
+public void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
 { 
   for (int i = 0; i < lines.length; ++i)
   {
@@ -224,12 +242,12 @@ void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
   }
 }
 
-void drawDirections()
+public void drawDirections()
 {
-  xRes = int(W/xParts);
+  xRes = PApplet.parseInt(W/xParts);
   format = W/H;
-  yParts = int(xParts/format+1);
-  yRes = int(H/yParts);
+  yParts = PApplet.parseInt(xParts/format+1);
+  yRes = PApplet.parseInt(H/yParts);
   grid = new Cell[xParts][yParts];
 
   for (int i = 0; i < xParts; i++) {
@@ -262,7 +280,7 @@ void drawDirections()
   }
 }
 
-void drawDensity()
+public void drawDensity()
 {
   for (int i = 0; i < lines.length; ++i)
   {
@@ -281,7 +299,7 @@ void drawDensity()
   }
 }
 
-void drawTraces()
+public void drawTraces()
 {
   tracing();
   //println(maxfc);
@@ -291,52 +309,52 @@ void drawTraces()
 
 // control events
 
-void drPath() 
+public void drPath() 
 {
   image(bgImage, 0, 0);
   strokeWeight(strokeWeight);
   drawPaths(200, 255, 100, 100, 255, 200, alpha);
 }
 
-void pThickness_(int t) {
+public void pThickness_(int t) {
   strokeWeight = t;
   drPath();
 }
 
-void pAlpha_(int a) {
+public void pAlpha_(int a) {
   alpha = a;
   drPath();
 }
 
-void drDirection()
+public void drDirection()
 {
   image(bgImage, 0, 0);
 
   drawDirections(); // execute code for vector analysis
 }
 
-void gridSize_(int x) {
+public void gridSize_(int x) {
   xParts = x;
   drDirection();
 }
 
-void dRadius_(int x){
+public void dRadius_(int x){
   radius = x;
   drDensity();
 }
 
-void dAlpha_(int a){
+public void dAlpha_(int a){
   alpha = a;
   drDensity();
 }
 
-void drDensity()
+public void drDensity()
 {
   image(bgImage, 0, 0);
   drawDensity(); // execute code for vector analysis
 }
 
-void drTraces()
+public void drTraces()
 {
   image(bgImage, 0, 0);
   strokeWeight(1);
@@ -372,9 +390,121 @@ public void controlEvent(ControlEvent theEvent) {
 }
 
 
-void delay(int t)
+public void delay(int t)
 {
   int time = millis();
   while (millis () - time <= t);
 }
 
+class Cell
+{
+  PVector center;
+  PVector location;
+  PVector averageDir = new PVector(0,0);
+  int zCount = 0;
+  ArrayList <PVector> directions = new ArrayList <PVector>();
+  
+  Cell(int x_, int y_)
+  {
+    location = new PVector(x_, y_);
+    center = new PVector(x_+xRes/2, y_+yRes/2);
+  }
+  
+  public void display()
+  {
+    stroke(100, 255, 200, 75);
+    strokeWeight(1);
+    noFill();
+    rect(location.x,location.y,xRes,yRes);
+    stroke(200, 255, 100);
+    noFill();
+    ellipseMode(CENTER);
+    //ellipse(center.x, center.y, 2, 2);
+    pushMatrix();
+    translate(center.x,center.y);
+    strokeWeight(2); // map(dCount,0,100,1,5)
+    line(0,0,averageDir.x, averageDir.y);
+    ellipse(averageDir.x, averageDir.y, 2, 2);
+    popMatrix();
+  }
+  
+  public void drawArrow(int x1_, int x2_, int y1_, int y2_)
+  {
+    
+  }
+  
+  public boolean isInCell(int x_, int y_)
+  {
+    if (x_ > location.x && x_ <= location.x+xRes && y_ > location.y && y_ <= location.y+yRes) return true;
+    else return false;
+  }
+}
+int xParts = 14;
+int yParts;
+int xRes;
+int yRes;
+float format;
+
+float W = 700.0f;
+float H = 394.0f;
+
+//    in setup:
+
+//    xRes = W/xParts;
+//    format = W/H;
+//    yParts = int(xParts/format+1);
+
+public void raster()
+{
+  println();
+  loadPixels();
+  for (int x=0;x<width;x++)
+  {
+    for (int y=0;y<height;y++)
+    {
+      int loc = x + y*width;
+      //if(x%xRes == 0) pixels[loc] = color(0);
+      //else if(y%xRes == 0) pixels[loc] = color(0);
+      //else pixels[loc] = color(255);
+      //if(x<xRes*2 && x>xRes && y>xRes*6 && y<xRes*7) pixels[loc] = color(100);
+      
+    }
+  }
+  updatePixels();
+}
+public void tracing()
+{
+	moves = new String[0];
+	for (int cf = 0; cf < maxfc; cf++)
+	{
+	  for (int i = 0; i < lines.length; ++i)
+	
+  {
+    String[] temp2 = split(lines[i], ',');
+    fc = PApplet.parseInt(temp2[3]);
+    if (fc==cf)
+    {
+    	moves = append(moves, lines[i]);
+    	//println("eins");
+    }
+   		
+  }
+  }	
+  println(moves.length);
+  	for(x=0; x<moves.length;x++)
+  	{
+  		test.println(moves[x]);
+  		println("wink");
+  	}
+  test.flush();
+  test.close();
+ }
+  static public void main(String[] passedArgs) {
+    String[] appletArgs = new String[] { "CCT_visualisierung" };
+    if (passedArgs != null) {
+      PApplet.main(concat(appletArgs, passedArgs));
+    } else {
+      PApplet.main(appletArgs);
+    }
+  }
+}
