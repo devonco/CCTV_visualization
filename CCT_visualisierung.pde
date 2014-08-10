@@ -4,10 +4,16 @@ PImage bgImage;
 
 String[] temp;
 String[] temp2;
+String[] temp3;
 String[] lines;
+
+// tracing 
 String[] moves;
 int fc;
 int maxfc;
+IntList personsTotal;
+ArrayList <Path> paths;
+PVector lWp, cWp;
 
 int n;
 int x, x_, y, y_, id, id_; // variables for reading out coordinate list -> splitAssign() 
@@ -43,6 +49,8 @@ void setup()
   size(bgImage.width, bgImage.height);
   image(bgImage, 0, 0);
   test = createWriter("test.txt");
+  personsTotal = new IntList();
+  
   /* directions
    
    xRes = int(W/xParts);
@@ -170,7 +178,7 @@ void setup()
                 .setLabel("circle transparency")
                   .setColorLabel(color(0))
                     ;
-  cp5.addBang("reset")
+  cp5.addBang("resetTraces")
     .setPosition(5, 40)
       .setSize(20, 20)
         .setTriggerEvent(Bang.RELEASE)
@@ -186,15 +194,50 @@ void setup()
   cp5.getController("gridSize_").moveTo("Directions");
   cp5.getController("dRadius_").moveTo("Density");
   cp5.getController("dAlpha_").moveTo("Density");
-  cp5.getController("reset").moveTo("Tracing");
+  cp5.getController("resetTraces").moveTo("Tracing");
+
+timeSinceLastLetter = millis();
+paths = new ArrayList <Path>();
+frameRate(300);
 }
 
+
+boolean click=false;
+int border=2;
+int timeSinceLastLetter;
+int zett=0;
 void draw() 
 {
+if(click){
+  //for (int z=0;z<border;z++)
+  //{
+    temp3 = split(moves[zett], ',');
+    int id = int(temp3[0]);
+    int x = int(temp3[1]);
+    int y = int(temp3[2]);
+    if (personsTotal.hasValue(id))
+    {
+      int place = checkPlace(id);
+      Path p = paths.get(place);
+      p.update(x,y);
+      
+    } else {
+    personsTotal.append(id);
+    paths.add(new Path(id));
+    }
+    drawTr();
+  //} //e.o.for
+if (millis ()- timeSinceLastLetter >= 0.5) {
+    timeSinceLastLetter = millis();
+    //border++;
+    zett++;
+}
+if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
+}
 }
 
 void splitAssign(int i) {
-  String[] temp = split(lines[i], ',');
+  temp = split(lines[i], ',');
   id_ = id;
   id = int(temp[0]);
   x_ = x;
@@ -283,11 +326,12 @@ void drawDensity()
 
 void drawTraces()
 {
-  tracing();
-  //println(maxfc);
+  sortMoves();
+  stroke(200, 255, 100); 
 
 
 }
+
 
 // control events
 
@@ -370,11 +414,3 @@ public void controlEvent(ControlEvent theEvent) {
       );
   }
 }
-
-
-void delay(int t)
-{
-  int time = millis();
-  while (millis () - time <= t);
-}
-
