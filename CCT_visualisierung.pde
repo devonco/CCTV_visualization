@@ -149,7 +149,7 @@ void setup()
               ;
   cp5.addSlider("gridSize_")
     .setBroadcast(false)
-      .setRange(2, 25)
+      .setRange(2, 40)
         .setValue(14)
           .setPosition(5, 70)
             .setSize(100, 20)
@@ -198,7 +198,7 @@ void setup()
 
 timeSinceLastLetter = millis();
 paths = new ArrayList <Path>();
-frameRate(300);
+frameRate(60);
 }
 
 
@@ -227,7 +227,7 @@ if(click){
     }
     drawTr();
   //} //e.o.for
-if (millis ()- timeSinceLastLetter >= 0.5) {
+if (millis ()- timeSinceLastLetter >= 5) {
     timeSinceLastLetter = millis();
     //border++;
     zett++;

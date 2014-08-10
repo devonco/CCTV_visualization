@@ -4,8 +4,8 @@ int xRes;
 int yRes;
 float format;
 
-float W = 700.0;
-float H = 394.0;
+float W = 1200;
+float H = 674;
 
 //    in setup:
 
