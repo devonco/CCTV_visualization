@@ -2,22 +2,15 @@ ArrayList pointList;
 PFont font;
 PImage bgImage;
 
+//arrays for processing positions.txt
 String[] temp;
 String[] temp2;
 String[] temp3;
 String[] lines;
 
-// tracing 
-String[] moves;
-int fc;
-int maxfc;
-IntList personsTotal;
-ArrayList <Path> paths;
-PVector lWp, cWp;
-
 int n;
 int x, x_, y, y_, id, id_; // variables for reading out coordinate list -> splitAssign() 
-int r1, r2, g1, g2, b1, b2;
+int r1, r2, g1, g2, b1, b2; //variables for pathcolors
 int alpha = 50;
 int strokeWeight = 3;
 int radius = 3;
@@ -25,21 +18,18 @@ int backgroundColor = 100;
 
 PVector location;
 
-//directions
-Cell[][] grid;
-
 import controlP5.*;
 ControlP5 cp5;
 
-PrintWriter test;
 
+
+// Interface based on controlp5-Library
 
 void setup()
 {
   String[] frameNumber = loadStrings("framecount.txt");
   maxfc = Integer.parseInt(frameNumber[0]);
   lines = loadStrings("positions.txt");
-  //moves = new String[0];
   background(backgroundColor);
   bgImage = loadImage("bgImage.jpg");
 
@@ -48,25 +38,9 @@ void setup()
 
   size(bgImage.width, bgImage.height);
   image(bgImage, 0, 0);
-  test = createWriter("test.txt");
   personsTotal = new IntList();
-  
-  /* directions
-   
-   xRes = int(W/xParts);
-   format = W/H;
-   yParts = int(xParts/format+1);
-   yRes = int(H/yParts);
-   grid = new Cell[xParts][yParts];
-   
-   for (int i = 0; i < xParts; i++) {
-   for (int j = 0; j < yParts; j++) {
-   grid[i][j] = new Cell(i*xRes,j*yRes);
-   }
-   }*/
 
-
-  // cp5 control
+  // cp5 interface control
 
   cp5 = new ControlP5(this);
 
@@ -196,21 +170,17 @@ void setup()
   cp5.getController("dAlpha_").moveTo("Density");
   cp5.getController("resetTraces").moveTo("Tracing");
 
-timeSinceLastLetter = millis();
+timeCount = millis();
 paths = new ArrayList <Path>();
 frameRate(60);
-}
+} //e.o. setup
 
 
-boolean click=false;
-int border=2;
-int timeSinceLastLetter;
-int zett=0;
+// draw-void only used for tracing-animation
 void draw() 
 {
+
 if(click){
-  //for (int z=0;z<border;z++)
-  //{
     temp3 = split(moves[zett], ',');
     int id = int(temp3[0]);
     int x = int(temp3[1]);
@@ -226,16 +196,19 @@ if(click){
     paths.add(new Path(id));
     }
     drawTr();
-  //} //e.o.for
-if (millis ()- timeSinceLastLetter >= 5) {
-    timeSinceLastLetter = millis();
-    //border++;
+
+if (millis ()- timeCount >= 5) {
+    timeCount = millis();
     zett++;
 }
 if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
 }
-}
+} //e.o. draw
 
+
+
+
+// processing data from positions.txt, by splitting every line into an array of substrings //
 void splitAssign(int i) {
   temp = split(lines[i], ',');
   id_ = id;
@@ -248,93 +221,9 @@ void splitAssign(int i) {
   location = new PVector(x, y);
 }
 
-void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
-{ 
-  for (int i = 0; i < lines.length; ++i)
-  {
-    splitAssign(i);
-    if (id == id_)
-    { 
-      if (x_-x>0) stroke(r1, g1, b1, alpha); 
-      else stroke(r2, g2, b2, alpha); //rgb(1)a moving left --- rgb(2)a moving right
-      line(x_, y_, x, y);
-    }
-    //println(location.x,location.y);
-    //textFont(f,10);
-    //fill(255,0,0);
-    //text(id, location.x, location.y);
-    n++;
-  }
-}
-
-void drawDirections()
-{
-  xRes = int(W/xParts);
-  format = W/H;
-  yParts = int(xParts/format+1);
-  yRes = int(H/yParts);
-  grid = new Cell[xParts][yParts];
-
-  for (int i = 0; i < xParts; i++) {
-    for (int j = 0; j < yParts; j++) {
-      grid[i][j] = new Cell(i*xRes, j*yRes);
-    }
-  }
-
-  for (int i = 0; i < xParts; i++) {
-    for (int j = 0; j < yParts; j++) {
-      int zCount_ = 0;
-      for (int l = 0; l < lines.length; ++l)
-      {
-        splitAssign(l);
-        if (grid[i][j].isInCell(x, y))
-        {
-          PVector loc = new PVector(x, y);
-          PVector loc_ = new PVector(x_, y_);
-          PVector dir = loc;
-          dir.sub(loc_);
-          grid[i][j].averageDir.add(dir);
-          zCount_ ++;
-          grid[i][j].averageDir.limit(xRes/2);
-        }
-      }
-
-      grid[i][j].zCount = zCount_;
-      grid[i][j].display();
-    }
-  }
-}
-
-void drawDensity()
-{
-  for (int i = 0; i < lines.length; ++i)
-  {
-    splitAssign(i);
-  /*
-    textFont(font, 10);  // ersetzen durch ellipse mit radius + slider
-    fill(255, 0, 0);
-    text("O", location.x, location.y);
-    */
-    noFill();
-    stroke(100, 255, 200, alpha); 
-    strokeWeight(1);
-    ellipseMode(CENTER);
-    ellipse(location.x, location.y, radius*2, radius*2);
-    
-  }
-}
-
-void drawTraces()
-{
-  sortMoves();
-  stroke(200, 255, 100); 
 
 
-}
-
-
-// control events
-
+// control events for interfacecontrols
 void drPath() 
 {
   image(bgImage, 0, 0);
@@ -355,9 +244,7 @@ void pAlpha_(int a) {
 void drDirection()
 {
   image(bgImage, 0, 0);
-
-  drawDirections(); // execute code for vector analysis
-}
+  drawDirections();
 
 void gridSize_(int x) {
   xParts = x;
@@ -377,7 +264,7 @@ void dAlpha_(int a){
 void drDensity()
 {
   image(bgImage, 0, 0);
-  drawDensity(); // execute code for vector analysis
+  drawDensity();
 }
 
 void drTraces()

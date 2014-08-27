@@ -20,16 +20,15 @@ ArrayList pointList;
 PFont font;
 PImage bgImage;
 
+//arrays for processing positions.txt
 String[] temp;
 String[] temp2;
+String[] temp3;
 String[] lines;
-String[] moves;
-int fc;
-int maxfc;
 
 int n;
 int x, x_, y, y_, id, id_; // variables for reading out coordinate list -> splitAssign() 
-int r1, r2, g1, g2, b1, b2;
+int r1, r2, g1, g2, b1, b2; //variables for pathcolors
 int alpha = 50;
 int strokeWeight = 3;
 int radius = 3;
@@ -37,21 +36,18 @@ int backgroundColor = 100;
 
 PVector location;
 
-//directions
-Cell[][] grid;
-
 
 ControlP5 cp5;
 
-PrintWriter test;
 
+
+// Interface based on controlp5-Library
 
 public void setup()
 {
   String[] frameNumber = loadStrings("framecount.txt");
   maxfc = Integer.parseInt(frameNumber[0]);
   lines = loadStrings("positions.txt");
-  //moves = new String[0];
   background(backgroundColor);
   bgImage = loadImage("bgImage.jpg");
 
@@ -60,23 +56,9 @@ public void setup()
 
   size(bgImage.width, bgImage.height);
   image(bgImage, 0, 0);
-  test = createWriter("test.txt");
-  /* directions
-   
-   xRes = int(W/xParts);
-   format = W/H;
-   yParts = int(xParts/format+1);
-   yRes = int(H/yParts);
-   grid = new Cell[xParts][yParts];
-   
-   for (int i = 0; i < xParts; i++) {
-   for (int j = 0; j < yParts; j++) {
-   grid[i][j] = new Cell(i*xRes,j*yRes);
-   }
-   }*/
+  personsTotal = new IntList();
 
-
-  // cp5 control
+  // cp5 interface control
 
   cp5 = new ControlP5(this);
 
@@ -159,7 +141,7 @@ public void setup()
               ;
   cp5.addSlider("gridSize_")
     .setBroadcast(false)
-      .setRange(2, 25)
+      .setRange(2, 40)
         .setValue(14)
           .setPosition(5, 70)
             .setSize(100, 20)
@@ -188,7 +170,7 @@ public void setup()
                 .setLabel("circle transparency")
                   .setColorLabel(color(0))
                     ;
-  cp5.addBang("reset")
+  cp5.addBang("resetTraces")
     .setPosition(5, 40)
       .setSize(20, 20)
         .setTriggerEvent(Bang.RELEASE)
@@ -204,15 +186,51 @@ public void setup()
   cp5.getController("gridSize_").moveTo("Directions");
   cp5.getController("dRadius_").moveTo("Density");
   cp5.getController("dAlpha_").moveTo("Density");
-  cp5.getController("reset").moveTo("Tracing");
-}
+  cp5.getController("resetTraces").moveTo("Tracing");
 
+timeCount = millis();
+paths = new ArrayList <Path>();
+frameRate(60);
+} //e.o. setup
+
+
+// draw-void only used for tracing-animation
 public void draw() 
 {
+
+if(click){
+    temp3 = split(moves[zett], ',');
+    int id = PApplet.parseInt(temp3[0]);
+    int x = PApplet.parseInt(temp3[1]);
+    int y = PApplet.parseInt(temp3[2]);
+    if (personsTotal.hasValue(id))
+    {
+      int place = checkPlace(id);
+      Path p = paths.get(place);
+      p.update(x,y);
+      
+    } else {
+    personsTotal.append(id);
+    paths.add(new Path(id));
+    }
+    drawTr();
+
+if (millis ()- timeCount >= 5) {
+    timeCount = millis();
+    zett++;
+}
+if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
 }
 
+} //e.o. draw
+
+
+
+
+// processing data from positions.txt, by splitting every line into an array of substrings //
+
 public void splitAssign(int i) {
-  String[] temp = split(lines[i], ',');
+  temp = split(lines[i], ',');
   id_ = id;
   id = PApplet.parseInt(temp[0]);
   x_ = x;
@@ -223,91 +241,9 @@ public void splitAssign(int i) {
   location = new PVector(x, y);
 }
 
-public void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
-{ 
-  for (int i = 0; i < lines.length; ++i)
-  {
-    splitAssign(i);
-    if (id == id_)
-    { 
-      if (x_-x>0) stroke(r1, g1, b1, alpha); 
-      else stroke(r2, g2, b2, alpha); //rgb(1)a moving left --- rgb(2)a moving right
-      line(x_, y_, x, y);
-    }
-    //println(location.x,location.y);
-    //textFont(f,10);
-    //fill(255,0,0);
-    //text(id, location.x, location.y);
-    n++;
-  }
-}
-
-public void drawDirections()
-{
-  xRes = PApplet.parseInt(W/xParts);
-  format = W/H;
-  yParts = PApplet.parseInt(xParts/format+1);
-  yRes = PApplet.parseInt(H/yParts);
-  grid = new Cell[xParts][yParts];
-
-  for (int i = 0; i < xParts; i++) {
-    for (int j = 0; j < yParts; j++) {
-      grid[i][j] = new Cell(i*xRes, j*yRes);
-    }
-  }
-
-  for (int i = 0; i < xParts; i++) {
-    for (int j = 0; j < yParts; j++) {
-      int zCount_ = 0;
-      for (int l = 0; l < lines.length; ++l)
-      {
-        splitAssign(l);
-        if (grid[i][j].isInCell(x, y))
-        {
-          PVector loc = new PVector(x, y);
-          PVector loc_ = new PVector(x_, y_);
-          PVector dir = loc;
-          dir.sub(loc_);
-          grid[i][j].averageDir.add(dir);
-          zCount_ ++;
-          grid[i][j].averageDir.limit(xRes/2);
-        }
-      }
-
-      grid[i][j].zCount = zCount_;
-      grid[i][j].display();
-    }
-  }
-}
-
-public void drawDensity()
-{
-  for (int i = 0; i < lines.length; ++i)
-  {
-    splitAssign(i);
-  /*
-    textFont(font, 10);  // ersetzen durch ellipse mit radius + slider
-    fill(255, 0, 0);
-    text("O", location.x, location.y);
-    */
-    noFill();
-    stroke(100, 255, 200, alpha); 
-    strokeWeight(1);
-    ellipseMode(CENTER);
-    ellipse(location.x, location.y, radius*2, radius*2);
-    
-  }
-}
-
-public void drawTraces()
-{
-  tracing();
-  //println(maxfc);
 
 
-}
-
-// control events
+// control events for interface //
 
 public void drPath() 
 {
@@ -329,7 +265,6 @@ public void pAlpha_(int a) {
 public void drDirection()
 {
   image(bgImage, 0, 0);
-
   drawDirections(); // execute code for vector analysis
 }
 
@@ -388,12 +323,87 @@ public void controlEvent(ControlEvent theEvent) {
       );
   }
 }
-
-
-public void delay(int t)
+public void drawDensity()
 {
-  int time = millis();
-  while (millis () - time <= t);
+  for (int i = 0; i < lines.length; ++i)
+  {
+    splitAssign(i);
+    noFill();
+    stroke(100, 255, 200, alpha); 
+    strokeWeight(1);
+    ellipseMode(CENTER);
+    ellipse(location.x, location.y, radius*2, radius*2);
+    
+  }
+}
+int xParts = 14;
+int yParts;
+int xRes;
+int yRes;
+float format;
+
+Cell[][] grid;
+
+float W = 1200;
+float H = 674;
+
+//    in setup:
+
+//    xRes = W/xParts;
+//    format = W/H;
+//    yParts = int(xParts/format+1);
+
+public void raster()
+{
+  println();
+  loadPixels();
+  for (int x=0;x<width;x++)
+  {
+    for (int y=0;y<height;y++)
+    {
+      int loc = x + y*width;
+      
+    }
+  }
+  updatePixels();
+}
+
+public void drawDirections()
+{
+  xRes = PApplet.parseInt(W/xParts);
+  format = W/H;
+  yParts = PApplet.parseInt(xParts/format+1);
+  yRes = PApplet.parseInt(H/yParts);
+  grid = new Cell[xParts][yParts];
+
+  for (int i = 0; i < xParts; i++) {
+    for (int j = 0; j < yParts; j++) {
+      grid[i][j] = new Cell(i*xRes, j*yRes);
+    }
+  }
+
+  for (int i = 0; i < xParts; i++) {
+    for (int j = 0; j < yParts; j++) {
+      int zCount_ = 0;
+      for (int l = 0; l < lines.length; ++l)
+      {
+        splitAssign(l);
+        if (grid[i][j].isInCell(x, y))
+        {
+          PVector loc = new PVector(x, y);
+          PVector loc_ = new PVector(x_, y_);
+          PVector dir = loc;
+          dir.sub(loc_);
+          grid[i][j].averageDir.add(dir);
+          zCount_ ++;
+          grid[i][j].averageDir.limit(xRes/2);
+        }
+      }
+
+      grid[i][j].zCount = zCount_;
+      grid[i][j].display();
+    }
+  }
 }
 
 class Cell
@@ -428,51 +438,39 @@ class Cell
     popMatrix();
   }
   
-  public void drawArrow(int x1_, int x2_, int y1_, int y2_)
-  {
-    
-  }
-  
   public boolean isInCell(int x_, int y_)
   {
     if (x_ > location.x && x_ <= location.x+xRes && y_ > location.y && y_ <= location.y+yRes) return true;
     else return false;
   }
 }
-int xParts = 14;
-int yParts;
-int xRes;
-int yRes;
-float format;
-
-float W = 700.0f;
-float H = 394.0f;
-
-//    in setup:
-
-//    xRes = W/xParts;
-//    format = W/H;
-//    yParts = int(xParts/format+1);
-
-public void raster()
-{
-  println();
-  loadPixels();
-  for (int x=0;x<width;x++)
+public void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
+{ 
+  for (int i = 0; i < lines.length; ++i)
   {
-    for (int y=0;y<height;y++)
-    {
-      int loc = x + y*width;
-      //if(x%xRes == 0) pixels[loc] = color(0);
-      //else if(y%xRes == 0) pixels[loc] = color(0);
-      //else pixels[loc] = color(255);
-      //if(x<xRes*2 && x>xRes && y>xRes*6 && y<xRes*7) pixels[loc] = color(100);
-      
+    splitAssign(i);
+    if (id == id_)
+    { 
+      if (x_-x>0) stroke(r1, g1, b1, alpha); 
+      else stroke(r2, g2, b2, alpha); //rgb(1)a moving left --- rgb(2)a moving right
+      line(x_, y_, x, y);
     }
+    n++;
   }
-  updatePixels();
 }
-public void tracing()
+String[] moves;
+int fc;
+int maxfc;
+IntList personsTotal;
+ArrayList <Path> paths;
+PVector lWp, cWp;
+
+boolean click=false;
+int border=2;
+int timeCount;
+int zett=0;
+
+public void sortMoves()
 {
 	moves = new String[0];
 	for (int cf = 0; cf < maxfc; cf++)
@@ -485,20 +483,74 @@ public void tracing()
     if (fc==cf)
     {
     	moves = append(moves, lines[i]);
-    	//println("eins");
     }
    		
   }
   }	
-  println(moves.length);
-  	for(x=0; x<moves.length;x++)
-  	{
-  		test.println(moves[x]);
-  		println("wink");
-  	}
-  test.flush();
-  test.close();
  }
+
+ class Path
+{
+  int pId;
+  ArrayList <PVector> waypoints = new ArrayList <PVector>();
+
+  Path(int id_)
+  {
+    pId = id_;
+  }
+
+  public void update(int x, int y)
+  {
+    waypoints.add(new PVector(x,y));
+  }
+
+  public void drawTs()
+  {
+    for (int wp=0;wp<waypoints.size();wp++)
+    {
+      if(wp>0) {lWp = cWp.get();}
+      cWp = waypoints.get(wp);
+      if(wp>0) line(lWp.x,lWp.y,cWp.x,cWp.y);
+    }
+  }
+}//e.o.class.Path
+
+public void resetTraces()
+{
+ image(bgImage, 0, 0);
+ click=true;
+} //e.o.void
+
+public int checkPlace(int id)
+{
+  int position = -1;
+  for (int z=0; z<personsTotal.size();z++)
+  {
+    int a = personsTotal.get(z);
+    if (id==a)
+      { 
+        position = z;
+        break;
+      }
+  }
+   return(position);
+}
+
+public void drawTr()
+{
+  for (int p=0;p<paths.size();p++)
+  {
+    Path cp = paths.get(p);
+    cp.drawTs();
+ 
+  }
+}
+
+public void drawTraces()
+{
+  sortMoves();
+  stroke(200, 255, 100); 
+}
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "CCT_visualisierung" };
     if (passedArgs != null) {

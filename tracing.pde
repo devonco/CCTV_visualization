@@ -1,3 +1,15 @@
+String[] moves;
+int fc;
+int maxfc;
+IntList personsTotal;
+ArrayList <Path> paths;
+PVector lWp, cWp;
+
+boolean click=false;
+int border=2;
+int timeCount;
+int zett=0;
+
 void sortMoves()
 {
 	moves = new String[0];
@@ -11,18 +23,10 @@ void sortMoves()
     if (fc==cf)
     {
     	moves = append(moves, lines[i]);
-    	//println("eins");
     }
    		
   }
   }	
-  println(moves.length);
-  	for(x=0; x<moves.length;x++)
-  	{
-  		test.println(moves[x]);
-  	}
-  test.flush();
-  test.close();
  }
 
  class Path
@@ -55,7 +59,6 @@ void resetTraces()
 {
  image(bgImage, 0, 0);
  click=true;
- //border=1;
 } //e.o.void
 
 int checkPlace(int id)
@@ -81,4 +84,10 @@ void drawTr()
     cp.drawTs();
  
   }
+}
+
+void drawTraces()
+{
+  sortMoves();
+  stroke(200, 255, 100); 
 }
