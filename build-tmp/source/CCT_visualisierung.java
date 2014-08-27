@@ -83,6 +83,8 @@ public void setup()
       .setColorLabel(color(255))
         .setColorActive(color(255, 200, 100))
           ;
+
+          cp5.window().setPositionOfTabs(width/2-70,0);
   // set tab properties
   cp5.getTab("default")
     .hide()
@@ -109,7 +111,7 @@ public void setup()
     .setBroadcast(false)
       .setRange(0, 10)
         .setValue(3)
-          .setPosition(5, 40)
+          .setPosition(5, 70)
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("path thickness")
@@ -119,13 +121,13 @@ public void setup()
     .setBroadcast(false)
       .setRange(0, 255)
         .setValue(50)
-          .setPosition(5, 70)
+          .setPosition(5, 100)
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("path transparency")
                   .setColorLabel(color(0))
                     ;
-  cp5.addBang("color1_")
+  /* cp5.addBang("color1_")
     .setPosition(5, 100)
       .setSize(20, 20)
         .setTriggerEvent(Bang.RELEASE)
@@ -138,7 +140,7 @@ public void setup()
         .setTriggerEvent(Bang.RELEASE)
           .setLabel("moving to the right")
             .setColorLabel(color(0))
-              ;
+              ; */
   cp5.addSlider("gridSize_")
     .setBroadcast(false)
       .setRange(2, 40)
@@ -181,8 +183,8 @@ public void setup()
   //arrange controllers in Tabs
   cp5.getController("pThickness_").moveTo("Paths");
   cp5.getController("pAlpha_").moveTo("Paths");
-  cp5.getController("color1_").moveTo("Paths");
-  cp5.getController("color2_").moveTo("Paths");
+  //cp5.getController("color1_").moveTo("Paths");
+  //cp5.getController("color2_").moveTo("Paths");
   cp5.getController("gridSize_").moveTo("Directions");
   cp5.getController("dRadius_").moveTo("Density");
   cp5.getController("dAlpha_").moveTo("Density");
@@ -193,42 +195,7 @@ paths = new ArrayList <Path>();
 frameRate(60);
 } //e.o. setup
 
-
-// draw-void only used for tracing-animation
-public void draw() 
-{
-
-if(click){
-    temp3 = split(moves[zett], ',');
-    int id = PApplet.parseInt(temp3[0]);
-    int x = PApplet.parseInt(temp3[1]);
-    int y = PApplet.parseInt(temp3[2]);
-    if (personsTotal.hasValue(id))
-    {
-      int place = checkPlace(id);
-      Path p = paths.get(place);
-      p.update(x,y);
-      
-    } else {
-    personsTotal.append(id);
-    paths.add(new Path(id));
-    }
-    drawTr();
-
-if (millis ()- timeCount >= 5) {
-    timeCount = millis();
-    zett++;
-}
-if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
-}
-
-} //e.o. draw
-
-
-
-
 // processing data from positions.txt, by splitting every line into an array of substrings //
-
 public void splitAssign(int i) {
   temp = split(lines[i], ',');
   id_ = id;
@@ -243,8 +210,7 @@ public void splitAssign(int i) {
 
 
 
-// control events for interface //
-
+// control events for interfacecontrols
 public void drPath() 
 {
   image(bgImage, 0, 0);
@@ -265,7 +231,7 @@ public void pAlpha_(int a) {
 public void drDirection()
 {
   image(bgImage, 0, 0);
-  drawDirections(); // execute code for vector analysis
+  drawDirections();
 }
 
 public void gridSize_(int x) {
@@ -286,7 +252,7 @@ public void dAlpha_(int a){
 public void drDensity()
 {
   image(bgImage, 0, 0);
-  drawDensity(); // execute code for vector analysis
+  drawDensity();
 }
 
 public void drTraces()
@@ -322,6 +288,47 @@ public void controlEvent(ControlEvent theEvent) {
       " / value:"+theEvent.controller().value()
       );
   }
+}
+
+public void arrow(int direction, int r, int g, int b, int bw, int a)
+{
+  int baseX = 0;
+  int baseY = 0;
+  float angle = 0;
+  switch(direction) {
+  case 0: 
+    baseX = 30;
+    baseY = 30;
+    angle = -HALF_PI/2;
+    break;
+  case 1: 
+    baseX = width-30;
+    baseY = 30;
+    angle = HALF_PI/2;
+    break;
+  case 2: 
+    baseX = width-30;
+    baseY = height-30;
+    angle = HALF_PI*1.5f;
+    break;
+  case 3: 
+    baseX = 30;
+    baseY = height-30;
+    angle = HALF_PI*2.5f;
+    break;
+}
+pushMatrix();
+translate(baseX,baseY);
+rotate(angle);
+strokeWeight(8);
+stroke(bw,bw,bw);
+line (0,-9,9,0);
+line (0,-9,-9,0);
+strokeWeight(4);
+stroke(r,g,b);
+line (0,-9,9,0);
+line (0,-9,-9,0);
+popMatrix();
 }
 public void drawDensity()
 {
@@ -451,12 +458,29 @@ public void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
     splitAssign(i);
     if (id == id_)
     { 
-      if (x_-x>0) stroke(r1, g1, b1, alpha); 
-      else stroke(r2, g2, b2, alpha); //rgb(1)a moving left --- rgb(2)a moving right
+      if (x_-x>0 && y_-y>0) stroke(r1, g1, b1, alpha); 
+      else if (x_-x<=0 && y_-y>0) stroke(r2, g2, b2, alpha); //rgb(1)a moving left --- rgb(2)a moving right
+      else if (x_-x>0 && y_-y<=0) stroke(250, 50, 50, alpha);
+      else stroke(250, 200, 200, alpha);
       line(x_, y_, x, y);
     }
     n++;
   }
+  /*noStroke();
+  fill (200, 255, 100, alpha);
+  ellipse(20,20,40,40);
+  fill (100, 255, 200, alpha);
+  ellipse(width-20,20,40,40);
+  fill (250, 50, 50, alpha);
+  ellipse(20,height-20,40,40);
+  fill (250, 200, 200, alpha);
+  ellipse(width-20,height-20,40,40);*/
+
+  strokeWeight(4);
+arrow(0,200,255,100, 255, alpha); //topleft
+arrow(1,100,255,200, 255, alpha); //topright
+arrow(2,250,200,200, 255, alpha); //bottomright
+arrow(3,250,50,50, 255, alpha); //bottomleft 
 }
 String[] moves;
 int fc;
@@ -551,6 +575,35 @@ public void drawTraces()
   sortMoves();
   stroke(200, 255, 100); 
 }
+
+// draw-void only used for tracing-animation
+public void draw() 
+{
+
+if(click){
+    temp3 = split(moves[zett], ',');
+    int id = PApplet.parseInt(temp3[0]);
+    int x = PApplet.parseInt(temp3[1]);
+    int y = PApplet.parseInt(temp3[2]);
+    if (personsTotal.hasValue(id))
+    {
+      int place = checkPlace(id);
+      Path p = paths.get(place);
+      p.update(x,y);
+      
+    } else {
+    personsTotal.append(id);
+    paths.add(new Path(id));
+    }
+    drawTr();
+
+if (millis ()- timeCount >= 5) {
+    timeCount = millis();
+    zett++;
+}
+if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
+}
+} //e.o. draw
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "CCT_visualisierung" };
     if (passedArgs != null) {

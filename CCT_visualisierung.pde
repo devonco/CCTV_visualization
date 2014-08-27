@@ -65,6 +65,8 @@ void setup()
       .setColorLabel(color(255))
         .setColorActive(color(255, 200, 100))
           ;
+
+          cp5.window().setPositionOfTabs(width/2-70,0);
   // set tab properties
   cp5.getTab("default")
     .hide()
@@ -91,7 +93,7 @@ void setup()
     .setBroadcast(false)
       .setRange(0, 10)
         .setValue(3)
-          .setPosition(5, 40)
+          .setPosition(5, 70)
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("path thickness")
@@ -101,13 +103,13 @@ void setup()
     .setBroadcast(false)
       .setRange(0, 255)
         .setValue(50)
-          .setPosition(5, 70)
+          .setPosition(5, 100)
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("path transparency")
                   .setColorLabel(color(0))
                     ;
-  cp5.addBang("color1_")
+  /* cp5.addBang("color1_")
     .setPosition(5, 100)
       .setSize(20, 20)
         .setTriggerEvent(Bang.RELEASE)
@@ -120,7 +122,7 @@ void setup()
         .setTriggerEvent(Bang.RELEASE)
           .setLabel("moving to the right")
             .setColorLabel(color(0))
-              ;
+              ; */
   cp5.addSlider("gridSize_")
     .setBroadcast(false)
       .setRange(2, 40)
@@ -163,8 +165,8 @@ void setup()
   //arrange controllers in Tabs
   cp5.getController("pThickness_").moveTo("Paths");
   cp5.getController("pAlpha_").moveTo("Paths");
-  cp5.getController("color1_").moveTo("Paths");
-  cp5.getController("color2_").moveTo("Paths");
+  //cp5.getController("color1_").moveTo("Paths");
+  //cp5.getController("color2_").moveTo("Paths");
   cp5.getController("gridSize_").moveTo("Directions");
   cp5.getController("dRadius_").moveTo("Density");
   cp5.getController("dAlpha_").moveTo("Density");
@@ -174,39 +176,6 @@ timeCount = millis();
 paths = new ArrayList <Path>();
 frameRate(60);
 } //e.o. setup
-
-
-// draw-void only used for tracing-animation
-void draw() 
-{
-
-if(click){
-    temp3 = split(moves[zett], ',');
-    int id = int(temp3[0]);
-    int x = int(temp3[1]);
-    int y = int(temp3[2]);
-    if (personsTotal.hasValue(id))
-    {
-      int place = checkPlace(id);
-      Path p = paths.get(place);
-      p.update(x,y);
-      
-    } else {
-    personsTotal.append(id);
-    paths.add(new Path(id));
-    }
-    drawTr();
-
-if (millis ()- timeCount >= 5) {
-    timeCount = millis();
-    zett++;
-}
-if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
-}
-} //e.o. draw
-
-
-
 
 // processing data from positions.txt, by splitting every line into an array of substrings //
 void splitAssign(int i) {
@@ -245,6 +214,7 @@ void drDirection()
 {
   image(bgImage, 0, 0);
   drawDirections();
+}
 
 void gridSize_(int x) {
   xParts = x;
@@ -300,4 +270,45 @@ public void controlEvent(ControlEvent theEvent) {
       " / value:"+theEvent.controller().value()
       );
   }
+}
+
+void arrow(int direction, int r, int g, int b, int bw, int a)
+{
+  int baseX = 0;
+  int baseY = 0;
+  float angle = 0;
+  switch(direction) {
+  case 0: 
+    baseX = 30;
+    baseY = 30;
+    angle = -HALF_PI/2;
+    break;
+  case 1: 
+    baseX = width-30;
+    baseY = 30;
+    angle = HALF_PI/2;
+    break;
+  case 2: 
+    baseX = width-30;
+    baseY = height-30;
+    angle = HALF_PI*1.5;
+    break;
+  case 3: 
+    baseX = 30;
+    baseY = height-30;
+    angle = HALF_PI*2.5;
+    break;
+}
+pushMatrix();
+translate(baseX,baseY);
+rotate(angle);
+strokeWeight(8);
+stroke(bw,bw,bw);
+line (0,-9,9,0);
+line (0,-9,-9,0);
+strokeWeight(4);
+stroke(r,g,b);
+line (0,-9,9,0);
+line (0,-9,-9,0);
+popMatrix();
 }
