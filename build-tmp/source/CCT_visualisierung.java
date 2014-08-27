@@ -513,7 +513,7 @@ public void sortMoves()
     }
    		
   }
-  }	
+  }
  }
 
  class Path
@@ -545,6 +545,9 @@ public void sortMoves()
 public void resetTraces()
 {
  image(bgImage, 0, 0);
+ zett=0;
+ paths = new ArrayList <Path>();
+ personsTotal.clear();
  click=true;
 } //e.o.void
 
