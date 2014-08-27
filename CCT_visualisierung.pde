@@ -195,6 +195,7 @@ void splitAssign(int i) {
 // control events for interfacecontrols
 void drPath() 
 {
+  click=false;
   image(bgImage, 0, 0);
   strokeWeight(strokeWeight);
   drawPaths(200, 255, 100, 100, 255, 200, alpha);
@@ -212,6 +213,7 @@ void pAlpha_(int a) {
 
 void drDirection()
 {
+  click=false;
   image(bgImage, 0, 0);
   drawDirections();
 }
@@ -233,6 +235,7 @@ void dAlpha_(int a){
 
 void drDensity()
 {
+  click=false;
   image(bgImage, 0, 0);
   drawDensity();
 }

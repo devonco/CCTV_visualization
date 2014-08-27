@@ -113,7 +113,7 @@ if(click){
     }
     drawTr();
 
-if (millis ()- timeCount >= 5) {
+if (millis ()- timeCount >= 2) {
     timeCount = millis();
     zett++;
 }

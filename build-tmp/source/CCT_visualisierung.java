@@ -213,6 +213,7 @@ public void splitAssign(int i) {
 // control events for interfacecontrols
 public void drPath() 
 {
+  click=false;
   image(bgImage, 0, 0);
   strokeWeight(strokeWeight);
   drawPaths(200, 255, 100, 100, 255, 200, alpha);
@@ -230,6 +231,7 @@ public void pAlpha_(int a) {
 
 public void drDirection()
 {
+  click=false;
   image(bgImage, 0, 0);
   drawDirections();
 }
@@ -251,6 +253,7 @@ public void dAlpha_(int a){
 
 public void drDensity()
 {
+  click=false;
   image(bgImage, 0, 0);
   drawDensity();
 }
@@ -597,7 +600,7 @@ if(click){
     }
     drawTr();
 
-if (millis ()- timeCount >= 5) {
+if (millis ()- timeCount >= 2) {
     timeCount = millis();
     zett++;
 }
