@@ -7,6 +7,7 @@ String[] temp;
 String[] temp2;
 String[] temp3;
 String[] lines;
+String[] speedLines;
 
 int n;
 int x, x_, y, y_, id, id_; // variables for reading out coordinate list -> splitAssign() 
@@ -30,13 +31,14 @@ void setup()
   String[] frameNumber = loadStrings("framecount.txt");
   maxfc = Integer.parseInt(frameNumber[0]);
   lines = loadStrings("positions.txt");
+  speedLines = loadStrings("speed.txt");
   background(backgroundColor);
   bgImage = loadImage("bgImage.jpg");
 
   pointList = new ArrayList();
   font = createFont("Arial", 16, true);
 
-  size(bgImage.width, bgImage.height);
+  size(bgImage.width, bgImage.height, P3D);
   image(bgImage, 0, 0);
   personsTotal = new IntList();
 
@@ -48,22 +50,27 @@ void setup()
   cp5.addTab("Paths")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
           ;
   cp5.addTab("Directions")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
           ;
   cp5.addTab("Density")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
           ;
     cp5.addTab("Tracing")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
+          ;
+    cp5.addTab("3D Map")
+    .setColorBackground(color(100, 200, 255))
+      .setColorLabel(color(255))
+        .setColorActive(color(255, 0, 0))
           ;
 
           cp5.window().setPositionOfTabs(width/2-70,0);
@@ -86,6 +93,10 @@ void setup()
   cp5.getTab("Tracing")
     .activateEvent(true)
       .setId(5)
+        ;
+  cp5.getTab("3D Map")
+    .activateEvent(true)
+      .setId(6)
         ;
 
   //create controllers
@@ -161,6 +172,46 @@ void setup()
           .setLabel("reset")
             .setColorLabel(color(0))
               ;
+  cp5.addSlider("mapGridSize_")
+    .setBroadcast(false)
+      .setRange(10, 80)
+        .setValue(40)
+          .setPosition(5, 70)
+            .setSize(100, 20)
+              .setBroadcast(true)
+                .setLabel("Cells in Grid")
+                  .setColorLabel(color(255))
+                    ;
+  cp5.addSlider("rotationSpeed_")
+    .setBroadcast(false)
+      .setRange(0.25, -0.25)
+        .setValue(0)
+          .setPosition(5, 100)
+            .setSize(100, 20)
+              .setBroadcast(true)
+                .setLabel("Rotation Speed")
+                  .setColorLabel(color(255))
+                    ;
+  cp5.addSlider("transparency_")
+    .setBroadcast(false)
+      .setRange(0, 100)
+        .setValue(80)
+          .setPosition(5, 130)
+            .setSize(100, 20)
+              .setBroadcast(true)
+                .setLabel("Transparency")
+                  .setColorLabel(color(255))
+                    ;
+  cp5.addButton("density_")
+      .setPosition(5,160)
+        .setSize(100,20)
+          .setLabel("Density")
+            ;
+  cp5.addButton("speed_")
+      .setPosition(5,190)
+        .setSize(100,20)
+          .setLabel("Speed")
+            ;
 
   //arrange controllers in Tabs
   cp5.getController("pThickness_").moveTo("Paths");
@@ -171,6 +222,11 @@ void setup()
   cp5.getController("dRadius_").moveTo("Density");
   cp5.getController("dAlpha_").moveTo("Density");
   cp5.getController("resetTraces").moveTo("Tracing");
+  cp5.getController("mapGridSize_").moveTo("3D Map");
+  cp5.getController("rotationSpeed_").moveTo("3D Map");
+  cp5.getController("transparency_").moveTo("3D Map");
+  cp5.getController("density_").moveTo("3D Map");
+  cp5.getController("speed_").moveTo("3D Map");
 
 timeCount = millis();
 paths = new ArrayList <Path>();
@@ -190,12 +246,25 @@ void splitAssign(int i) {
   location = new PVector(x, y);
 }
 
+void splitAssignSpeed(int i) {
+  temp = split(speedLines[i], ',');
+  id_ = id;
+  id = int(temp[0]);
+  x_ = x;
+  y_ = y;
+  x = int(temp[1]);
+  y = int(temp[2]);
+  sp = int(temp[3]);
+  location = new PVector(x, y);
+}
+
 
 
 // control events for interfacecontrols
 void drPath() 
 {
   click=false;
+  mapView = false;
   image(bgImage, 0, 0);
   strokeWeight(strokeWeight);
   drawPaths(200, 255, 100, 100, 255, 200, alpha);
@@ -214,6 +283,7 @@ void pAlpha_(int a) {
 void drDirection()
 {
   click=false;
+  mapView = false;
   image(bgImage, 0, 0);
   drawDirections();
 }
@@ -236,15 +306,50 @@ void dAlpha_(int a){
 void drDensity()
 {
   click=false;
+  mapView = false;
   image(bgImage, 0, 0);
   drawDensity();
 }
 
 void drTraces()
 {
+  mapView = false;
   image(bgImage, 0, 0);
   strokeWeight(1);
   drawTraces();
+}
+
+void dr3DMap()
+{
+  click=false;
+  if(densityView){setDensityGrid();}
+  if(speedView){setSpeedGrid();}
+  mapView = true;
+}
+
+void mapGridSize_(int x) {
+  xPartsM = x;
+  dr3DMap();
+}
+
+void rotationSpeed_(float s){
+  rotSpeed = s;
+}
+
+void transparency_(int t){
+  transparency = t;
+}
+
+void density_(){
+  densityView = true;
+  speedView = false;
+  setDensityGrid();
+}
+
+void speed_(){
+  densityView = false;
+  speedView = true;
+  setSpeedGrid();
 }
 
 public void controlEvent(ControlEvent theEvent) {
@@ -264,6 +369,10 @@ public void controlEvent(ControlEvent theEvent) {
     if (theEvent.getTab().getId() == 5) {
       background(backgroundColor); 
       drTraces();
+    }
+    if (theEvent.getTab().getId() == 6) {
+      background(backgroundColor); 
+      dr3DMap();
     }
   } else {
     println(

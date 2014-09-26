@@ -14,7 +14,7 @@ import java.io.InputStream;
 import java.io.OutputStream; 
 import java.io.IOException; 
 
-public class CCT_visualisierung extends PApplet {
+public class CCTV_Visualization extends PApplet {
 
 ArrayList pointList;
 PFont font;
@@ -25,6 +25,7 @@ String[] temp;
 String[] temp2;
 String[] temp3;
 String[] lines;
+String[] speedLines;
 
 int n;
 int x, x_, y, y_, id, id_; // variables for reading out coordinate list -> splitAssign() 
@@ -48,13 +49,14 @@ public void setup()
   String[] frameNumber = loadStrings("framecount.txt");
   maxfc = Integer.parseInt(frameNumber[0]);
   lines = loadStrings("positions.txt");
+  speedLines = loadStrings("speed.txt");
   background(backgroundColor);
   bgImage = loadImage("bgImage.jpg");
 
   pointList = new ArrayList();
   font = createFont("Arial", 16, true);
 
-  size(bgImage.width, bgImage.height);
+  size(bgImage.width, bgImage.height, P3D);
   image(bgImage, 0, 0);
   personsTotal = new IntList();
 
@@ -66,22 +68,27 @@ public void setup()
   cp5.addTab("Paths")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
           ;
   cp5.addTab("Directions")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
           ;
   cp5.addTab("Density")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
           ;
     cp5.addTab("Tracing")
     .setColorBackground(color(100, 200, 255))
       .setColorLabel(color(255))
-        .setColorActive(color(255, 200, 100))
+        .setColorActive(color(255, 0, 0))
+          ;
+    cp5.addTab("3D Map")
+    .setColorBackground(color(100, 200, 255))
+      .setColorLabel(color(255))
+        .setColorActive(color(255, 0, 0))
           ;
 
           cp5.window().setPositionOfTabs(width/2-70,0);
@@ -104,6 +111,10 @@ public void setup()
   cp5.getTab("Tracing")
     .activateEvent(true)
       .setId(5)
+        ;
+  cp5.getTab("3D Map")
+    .activateEvent(true)
+      .setId(6)
         ;
 
   //create controllers
@@ -179,6 +190,46 @@ public void setup()
           .setLabel("reset")
             .setColorLabel(color(0))
               ;
+  cp5.addSlider("mapGridSize_")
+    .setBroadcast(false)
+      .setRange(10, 80)
+        .setValue(40)
+          .setPosition(5, 70)
+            .setSize(100, 20)
+              .setBroadcast(true)
+                .setLabel("Cells in Grid")
+                  .setColorLabel(color(255))
+                    ;
+  cp5.addSlider("rotationSpeed_")
+    .setBroadcast(false)
+      .setRange(0.25f, -0.25f)
+        .setValue(0)
+          .setPosition(5, 100)
+            .setSize(100, 20)
+              .setBroadcast(true)
+                .setLabel("Rotation Speed")
+                  .setColorLabel(color(255))
+                    ;
+  cp5.addSlider("transparency_")
+    .setBroadcast(false)
+      .setRange(0, 100)
+        .setValue(80)
+          .setPosition(5, 130)
+            .setSize(100, 20)
+              .setBroadcast(true)
+                .setLabel("Transparency")
+                  .setColorLabel(color(255))
+                    ;
+  cp5.addButton("density_")
+      .setPosition(5,160)
+        .setSize(100,20)
+          .setLabel("Density")
+            ;
+  cp5.addButton("speed_")
+      .setPosition(5,190)
+        .setSize(100,20)
+          .setLabel("Speed")
+            ;
 
   //arrange controllers in Tabs
   cp5.getController("pThickness_").moveTo("Paths");
@@ -189,6 +240,11 @@ public void setup()
   cp5.getController("dRadius_").moveTo("Density");
   cp5.getController("dAlpha_").moveTo("Density");
   cp5.getController("resetTraces").moveTo("Tracing");
+  cp5.getController("mapGridSize_").moveTo("3D Map");
+  cp5.getController("rotationSpeed_").moveTo("3D Map");
+  cp5.getController("transparency_").moveTo("3D Map");
+  cp5.getController("density_").moveTo("3D Map");
+  cp5.getController("speed_").moveTo("3D Map");
 
 timeCount = millis();
 paths = new ArrayList <Path>();
@@ -208,12 +264,25 @@ public void splitAssign(int i) {
   location = new PVector(x, y);
 }
 
+public void splitAssignSpeed(int i) {
+  temp = split(speedLines[i], ',');
+  id_ = id;
+  id = PApplet.parseInt(temp[0]);
+  x_ = x;
+  y_ = y;
+  x = PApplet.parseInt(temp[1]);
+  y = PApplet.parseInt(temp[2]);
+  sp = PApplet.parseInt(temp[3]);
+  location = new PVector(x, y);
+}
+
 
 
 // control events for interfacecontrols
 public void drPath() 
 {
   click=false;
+  mapView = false;
   image(bgImage, 0, 0);
   strokeWeight(strokeWeight);
   drawPaths(200, 255, 100, 100, 255, 200, alpha);
@@ -232,6 +301,7 @@ public void pAlpha_(int a) {
 public void drDirection()
 {
   click=false;
+  mapView = false;
   image(bgImage, 0, 0);
   drawDirections();
 }
@@ -254,15 +324,50 @@ public void dAlpha_(int a){
 public void drDensity()
 {
   click=false;
+  mapView = false;
   image(bgImage, 0, 0);
   drawDensity();
 }
 
 public void drTraces()
 {
+  mapView = false;
   image(bgImage, 0, 0);
   strokeWeight(1);
   drawTraces();
+}
+
+public void dr3DMap()
+{
+  click=false;
+  if(densityView){setDensityGrid();}
+  if(speedView){setSpeedGrid();}
+  mapView = true;
+}
+
+public void mapGridSize_(int x) {
+  xPartsM = x;
+  dr3DMap();
+}
+
+public void rotationSpeed_(float s){
+  rotSpeed = s;
+}
+
+public void transparency_(int t){
+  transparency = t;
+}
+
+public void density_(){
+  densityView = true;
+  speedView = false;
+  setDensityGrid();
+}
+
+public void speed_(){
+  densityView = false;
+  speedView = true;
+  setSpeedGrid();
 }
 
 public void controlEvent(ControlEvent theEvent) {
@@ -282,6 +387,10 @@ public void controlEvent(ControlEvent theEvent) {
     if (theEvent.getTab().getId() == 5) {
       background(backgroundColor); 
       drTraces();
+    }
+    if (theEvent.getTab().getId() == 6) {
+      background(backgroundColor); 
+      dr3DMap();
     }
   } else {
     println(
@@ -454,6 +563,228 @@ class Cell
     else return false;
   }
 }
+// draw loop is only used for tracing animation and 3D map rotation
+
+public void draw() 
+{
+  //Tracing animation
+  if(click){
+      temp3 = split(moves[zett], ',');
+      int id = PApplet.parseInt(temp3[0]);
+      int x = PApplet.parseInt(temp3[1]);
+      int y = PApplet.parseInt(temp3[2]);
+      if (personsTotal.hasValue(id))
+      {
+        int place = checkPlace(id);
+        Path p = paths.get(place);
+        p.update(x,y);
+        
+      } else {
+      personsTotal.append(id);
+      paths.add(new Path(id));
+      }
+      drawTr();
+
+  if (millis ()- timeCount >= 2) {
+      timeCount = millis();
+      zett++;
+  }
+  if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
+  }
+
+  //3D density map
+  if(mapView)
+  {
+    background(0);
+    pushMatrix();
+    translate(width/2, height/2);
+    rotateX(radians(rotX));
+    rotateZ(radians(rotZ));
+    scale(zoom);
+
+    translate(-width/2, -height/2, 0);
+    image(bgImage, 0, 0);
+    translate(0, 0, -1);
+    
+    if (densityView) {
+      for (int i = 0; i < xPartsM; i++) {
+        for (int j = 0; j < yPartsM; j++) {
+          meshGrid[i][j].displayDensity();
+        }
+      } 
+    }
+    if (speedView) {
+      for (int i = 0; i < xPartsM; i++) {
+        for (int j = 0; j < yPartsM; j++) {
+          meshGrid[i][j].displaySpeed();
+        }
+      } 
+    }
+
+    popMatrix();
+    rotZ += rotSpeed;
+  }
+} //e.o. draw
+int xPartsM = 40;
+int yPartsM;
+int xResM;
+int yResM;
+float formatM;
+
+int idMax;
+int sp;
+float speedMax;
+
+float rotX = 45;
+float rotZ = 10;
+float rotSpeed =0;
+float zoom = 0.6f;
+int transparency = 80;
+
+boolean mapView = false;
+boolean densityView = true;
+boolean speedView  = false;
+
+MapCell[][] meshGrid;
+
+
+public void mouseDragged() {
+  if (mouseButton == LEFT) {
+    rotX -= PApplet.parseFloat(mouseY-pmouseY) * 80/ height;
+    rotZ -= PApplet.parseFloat(mouseX-pmouseX) * 200/ width;
+  }
+  if (mouseButton == RIGHT) {
+    zoom -= PApplet.parseFloat(mouseY-pmouseY) / height;
+  }
+}
+
+public void setDensityGrid()
+{
+  xResM = PApplet.parseInt(W/xPartsM);
+  formatM = W/H;
+  yPartsM = PApplet.parseInt(xPartsM/formatM+1);
+  yResM = PApplet.parseInt(H/yPartsM);
+  meshGrid = new MapCell[xPartsM][yPartsM];
+
+  for (int i = 0; i < xPartsM; i++) {
+    for (int j = 0; j < yPartsM; j++) {
+      meshGrid[i][j] = new MapCell(i*xResM, j*yResM);
+    }
+  } 
+
+  for (int i = 0; i < xPartsM; i++) {
+    for (int j = 0; j < yPartsM; j++) {
+      for (int l = 0; l < lines.length; ++l)
+      {
+        splitAssign(l);
+        if (meshGrid[i][j].isInCell(x, y))
+        {
+          if(meshGrid[i][j].idList.hasValue(id)==true){ continue; }
+          else{ meshGrid[i][j].idList.append(id); }
+        }
+      }
+      //println("Cellposition X: "+i+" Y: "+j+" "+meshGrid[i][j].idList);
+      if (idMax < meshGrid[i][j].idList.size()) {
+        idMax = meshGrid[i][j].idList.size();
+      }
+    }
+  }
+}
+
+public void setSpeedGrid()
+{
+  xResM = PApplet.parseInt(W/xPartsM);
+  formatM = W/H;
+  yPartsM = PApplet.parseInt(xPartsM/formatM+1);
+  yResM = PApplet.parseInt(H/yPartsM);
+  meshGrid = new MapCell[xPartsM][yPartsM];
+
+  for (int i = 0; i < xPartsM; i++) {
+    for (int j = 0; j < yPartsM; j++) {
+      meshGrid[i][j] = new MapCell(i*xResM, j*yResM);
+    }
+  } 
+
+  for (int i = 0; i < xPartsM; i++) {
+    for (int j = 0; j < yPartsM; j++) {
+      int magnitudes = 0;
+      int counter = 0;
+      for (int l = 0; l < speedLines.length; ++l)
+      {
+        splitAssignSpeed(l);
+        if (meshGrid[i][j].isInCell(x, y))
+        {
+          magnitudes += sp;
+          counter++;
+        }
+      }
+      if(counter != 0){
+        meshGrid[i][j].averageSpeed = magnitudes/counter;
+      }
+      if (speedMax < meshGrid[i][j].averageSpeed) {
+        speedMax = meshGrid[i][j].averageSpeed;
+      }
+    }
+  }
+}
+
+
+class MapCell
+{
+  PVector center;
+  PVector location;
+  int zCount = 0;
+  int averageSpeed;
+  IntList idList = new IntList();
+  
+  MapCell(int x_, int y_)
+  {
+    location = new PVector(x_, y_);
+    center = new PVector(x_+xResM/2, y_+yResM/2);
+  }
+  
+  public void displayDensity()
+  {
+    stroke(100, 255, 200, 75);
+    strokeWeight(1);
+    noFill();
+    rect(location.x,location.y,xResM,yResM);
+
+    pushMatrix();
+    colorMode(RGB,idMax,idMax,idMax,100);
+    translate(center.x, center.y, (idList.size()*4)/2);
+    noStroke();
+    //stroke(100, 255, 200, 50);
+    //strokeWeight(2);
+    fill(idList.size(),idMax-idList.size(),0,transparency);
+    box(xResM, yResM, idList.size()*4);
+    popMatrix();
+    colorMode(RGB,255);
+  }
+
+  public void displaySpeed()
+  {
+    stroke(100, 255, 200, 75);
+    strokeWeight(1);
+    noFill();
+    rect(location.x,location.y,xResM,yResM);
+
+    pushMatrix();
+    colorMode(RGB,speedMax,speedMax,speedMax,100);
+    translate(center.x, center.y, (averageSpeed*4)/2);
+    noStroke();
+    fill(averageSpeed,speedMax-averageSpeed,0,transparency);
+    box(xResM, yResM, averageSpeed*4);
+    popMatrix();
+    colorMode(RGB,255);
+  }
+  
+  public boolean isInCell(int x_, int y_)
+  {
+    if (x_ > location.x && x_ <= location.x+xResM && y_ > location.y && y_ <= location.y+yResM) return true;
+    else return false;
+  }
+}
 public void drawPaths(int r1, int g1, int b1, int r2, int g2, int b2, int alpha)
 { 
   for (int i = 0; i < lines.length; ++i)
@@ -581,37 +912,8 @@ public void drawTraces()
   sortMoves();
   stroke(200, 255, 100); 
 }
-
-// draw-void only used for tracing-animation
-public void draw() 
-{
-
-if(click){
-    temp3 = split(moves[zett], ',');
-    int id = PApplet.parseInt(temp3[0]);
-    int x = PApplet.parseInt(temp3[1]);
-    int y = PApplet.parseInt(temp3[2]);
-    if (personsTotal.hasValue(id))
-    {
-      int place = checkPlace(id);
-      Path p = paths.get(place);
-      p.update(x,y);
-      
-    } else {
-    personsTotal.append(id);
-    paths.add(new Path(id));
-    }
-    drawTr();
-
-//if (millis ()- timeCount >= 0) {
-   // timeCount = millis();
-    zett++;
-//}
-if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
-}
-} //e.o. draw
   static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "CCT_visualisierung" };
+    String[] appletArgs = new String[] { "CCTV_Visualization" };
     if (passedArgs != null) {
       PApplet.main(concat(appletArgs, passedArgs));
     } else {

@@ -94,32 +94,3 @@ void drawTraces()
   sortMoves();
   stroke(200, 255, 100); 
 }
-
-// draw-void only used for tracing-animation
-void draw() 
-{
-
-if(click){
-    temp3 = split(moves[zett], ',');
-    int id = int(temp3[0]);
-    int x = int(temp3[1]);
-    int y = int(temp3[2]);
-    if (personsTotal.hasValue(id))
-    {
-      int place = checkPlace(id);
-      Path p = paths.get(place);
-      p.update(x,y);
-      
-    } else {
-    personsTotal.append(id);
-    paths.add(new Path(id));
-    }
-    drawTr();
-
-//if (millis ()- timeCount >= 0) {
-   // timeCount = millis();
-    zett++;
-//}
-if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
-}
-} //e.o. draw
