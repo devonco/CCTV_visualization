@@ -116,10 +116,10 @@ if(click){
     }
     drawTr();
 
-if (millis ()- timeCount >= 2) {
-    timeCount = millis();
+//if (millis ()- timeCount >= 0) {
+   // timeCount = millis();
     zett++;
-}
+//}
 if (zett==moves.length){ click=false; zett=0;personsTotal.clear();paths = new ArrayList <Path>();}
 }
 } //e.o. draw
