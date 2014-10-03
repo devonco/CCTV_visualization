@@ -2,6 +2,23 @@
 
 void draw() 
 {
+    if (keyPressed) {
+      cp5.hide();
+      switch(activeTab) {
+  case 2: 
+    drPath();
+    break;
+  case 3: 
+    drDirection();
+    break;
+  case 4: 
+    drDensity();
+    break;
+  case 5: 
+    drTraces();
+    break;
+    }} else { cp5.show();
+    }
   //Tracing animation
   if(click){
       temp3 = split(moves[zett], ',');
