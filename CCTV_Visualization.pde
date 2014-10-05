@@ -420,14 +420,21 @@ void arrow(int direction, int r, int g, int b, int bw, int a)
 pushMatrix();
 translate(baseX,baseY);
 rotate(angle);
-strokeWeight(8);
+noFill();
+strokeWeight(7);
 stroke(bw,bw,bw);
-line (0,-9,9,0);
-line (0,-9,-9,0);
-strokeWeight(4);
+beginShape();
+vertex(10, 1);
+vertex(0, -9);
+vertex(-10, 1);
+endShape();
+strokeWeight(3);
 stroke(r,g,b);
-line (0,-9,9,0);
-line (0,-9,-9,0);
+beginShape();
+vertex(9, 0);
+vertex(0, -9);
+vertex(-9, 0);
+endShape();
 popMatrix();
 }
 

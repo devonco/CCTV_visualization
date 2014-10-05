@@ -34,6 +34,7 @@ int alpha = 50;
 int strokeWeight = 3;
 int radius = 3;
 int backgroundColor = 100;
+int activeTab = 0;
 
 PVector location;
 
@@ -126,7 +127,7 @@ public void setup()
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("path thickness")
-                  .setColorLabel(color(0))
+                  .setColorLabel(color(255))
                     ;
   cp5.addSlider("pAlpha_")
     .setBroadcast(false)
@@ -136,7 +137,7 @@ public void setup()
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("path transparency")
-                  .setColorLabel(color(0))
+                  .setColorLabel(color(255))
                     ;
   /* cp5.addBang("color1_")
     .setPosition(5, 100)
@@ -160,7 +161,7 @@ public void setup()
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("cells in grid")
-                  .setColorLabel(color(0))
+                  .setColorLabel(color(255))
                     ;
                     
    cp5.addSlider("dRadius_")
@@ -171,7 +172,7 @@ public void setup()
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("circle radius")
-                  .setColorLabel(color(0))
+                  .setColorLabel(color(255))
                     ;
   cp5.addSlider("dAlpha_")
     .setBroadcast(false)
@@ -181,14 +182,14 @@ public void setup()
             .setSize(100, 20)
               .setBroadcast(true)
                 .setLabel("circle transparency")
-                  .setColorLabel(color(0))
+                  .setColorLabel(color(255))
                     ;
   cp5.addBang("resetTraces")
     .setPosition(5, 40)
       .setSize(20, 20)
         .setTriggerEvent(Bang.RELEASE)
           .setLabel("reset")
-            .setColorLabel(color(0))
+            .setColorLabel(color(255))
               ;
   cp5.addSlider("mapGridSize_")
     .setBroadcast(false)
@@ -375,22 +376,27 @@ public void controlEvent(ControlEvent theEvent) {
     if (theEvent.getTab().getId() == 2) {
       background(backgroundColor); 
       drPath();
+      activeTab = 2;
     }
     if (theEvent.getTab().getId() == 3) {
       background(backgroundColor); 
       drDirection();
+      activeTab = 3;
     }
     if (theEvent.getTab().getId() == 4) {
       background(backgroundColor); 
       drDensity();
+      activeTab = 4;
     }
     if (theEvent.getTab().getId() == 5) {
       background(backgroundColor); 
       drTraces();
+      activeTab = 5;
     }
     if (theEvent.getTab().getId() == 6) {
       background(backgroundColor); 
       dr3DMap();
+      activeTab = 6;
     }
   } else {
     println(
@@ -432,16 +438,25 @@ public void arrow(int direction, int r, int g, int b, int bw, int a)
 pushMatrix();
 translate(baseX,baseY);
 rotate(angle);
-strokeWeight(8);
+noFill();
+strokeWeight(7);
 stroke(bw,bw,bw);
-line (0,-9,9,0);
-line (0,-9,-9,0);
-strokeWeight(4);
+beginShape();
+vertex(10, 1);
+vertex(0, -9);
+vertex(-10, 1);
+endShape();
+strokeWeight(3);
 stroke(r,g,b);
-line (0,-9,9,0);
-line (0,-9,-9,0);
+beginShape();
+vertex(9, 0);
+vertex(0, -9);
+vertex(-9, 0);
+endShape();
 popMatrix();
 }
+
+
 public void drawDensity()
 {
   for (int i = 0; i < lines.length; ++i)
@@ -567,6 +582,23 @@ class Cell
 
 public void draw() 
 {
+    if (keyPressed) {
+      cp5.hide();
+      switch(activeTab) {
+  case 2: 
+    drPath();
+    break;
+  case 3: 
+    drDirection();
+    break;
+  case 4: 
+    drDensity();
+    break;
+  case 5: 
+    drTraces();
+    break;
+    }} else { cp5.show();
+    }
   //Tracing animation
   if(click){
       temp3 = split(moves[zett], ',');
